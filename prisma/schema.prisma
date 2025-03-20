@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+}
+
+model ArbitrageOpportunity {
+  id                Int         @id @default(autoincrement())
+  eventName         String      @map("event_name")
+  team1             String
+  team2             String
+  site1Id           Int?        @map("site1_id")
+  site2Id           Int?        @map("site2_id")
+  site1Odds         Decimal     @map("site1_odds")
+  site2Odds         Decimal     @map("site2_odds")
+  profitPercentage  Decimal     @map("profit_percentage")
+  recommendedStake1 Decimal     @map("recommended_stake1")
+  recommendedStake2 Decimal     @map("recommended_stake2")
+  potentialProfit   Decimal     @map("potential_profit")
+  createdAt         DateTime    @default(now()) @map("created_at")
+  
+  // Relations
+  site1 BettingSite? @relation("Site1", fields: [site1Id], references: [id])
+  site2 BettingSite? @relation("Site2", fields: [site2Id], references: [id])
+
+  @@map("arbitrage_opportunities")
+}
+
+model BettingSite {
+  id            Int       @id @default(autoincrement())
+  name          String
+  url           String
+  oddsSelector  String    @map("odds_selector")
+  teamSelector  String    @map("team_selector")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  oddsData       OddsData[]
+  opportunities1 ArbitrageOpportunity[] @relation("Site1")
+  opportunities2 ArbitrageOpportunity[] @relation("Site2")
+
+  @@map("betting_sites")
+}
+
+model OddsData {
+  id            Int          @id @default(autoincrement())
+  bettingSiteId Int?         @map("betting_site_id")
+  eventName     String       @map("event_name")
+  team1         String
+  team2         String
+  team1Odds     Decimal      @map("team1_odds")
+  team2Odds     Decimal      @map("team2_odds")
+  drawOdds      Decimal?     @map("draw_odds")
+  scrapedAt     DateTime     @default(now()) @map("scraped_at")
+  
+  // Relations
+  bettingSite BettingSite? @relation(fields: [bettingSiteId], references: [id])
+
+  @@map("odds_data")
+}
+
+model Integration {
+  id        String   @id @default(uuid())
+  name      String
+  config    Json
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  @@map("integrations")
+}
